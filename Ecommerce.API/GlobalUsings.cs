@@ -1,0 +1,16 @@
+﻿global using System.ComponentModel.DataAnnotations;
+global using Microsoft.EntityFrameworkCore;
+global using System.ComponentModel.DataAnnotations.Schema;
+global using Ecommerce.API.Models;
+global using System.Linq.Expressions;
+global using Ecommerce.API.Data;
+global using Ecommerce.API.Interfaces;
+global using Ecommerce.API.DTOs.Requests;
+global using Ecommerce.API.DTOs.Responses;
+global using Ecommerce.API.DTOs.Requests.Brand;
+global using Ecommerce.API.DTOs.Responses.Brand;
+global using Ecommerce.API.DTOs.Requests.Category;
+global using Ecommerce.API.DTOs.Responses.Category;
+global using Ecommerce.API.DTOs.Requests.Product;
+global using Ecommerce.API.DTOs.Responses.Product;
+global using Microsoft.AspNetCore.Mvc;

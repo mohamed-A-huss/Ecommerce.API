@@ -1,0 +1,104 @@
+﻿using Ecommerce.API.Services;
+
+namespace Ecommerce.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class CategoriesController : ControllerBase
+    {
+        private readonly ICategoryService _categoryService;
+
+        public CategoriesController(ICategoryService categoryService)
+        {
+            _categoryService = categoryService;
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetAllAsync([FromQuery] FilterCategoryDto filter, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        {
+            var result = await _categoryService.GetAll(filter, pageNumber, pageSize);
+           
+            return Ok(new CategoryResponseDto
+            {
+                Categories = result.Categories,
+
+                TotalPages = result.TotalPages,
+                CurrentPage = result.CurrentPage,
+                Query = filter.Name
+            });
+        }
+        [HttpGet("{id}", Name = "GetCategoryById")]
+        public async Task<IActionResult> GetByIdAsync(int id)
+        {
+            var category = await _categoryService.GetByIdAsync(id);
+            if (category is null)
+                return NotFound();
+
+
+            CategoryItemDto categoryItemDto = new CategoryItemDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                Status = category.Status,
+                
+            };
+            return Ok(categoryItemDto);
+        }
+        [HttpPost]
+        public async Task<IActionResult> CreateAsync(CreateCategoryDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            Category? createdCategory = await _categoryService.CreateAsync(dto);
+            if (createdCategory is null)
+            {
+                return BadRequest();
+            }
+
+            CategoryItemDto response = new()
+            {
+                Id = createdCategory.Id,
+                Name = createdCategory.Name,
+                Status = createdCategory.Status
+            };
+
+
+
+            return CreatedAtRoute(
+                "GetCategoryById",
+                new { id = response.Id }, response);
+        }
+        
+        [HttpPut]
+        [Route("{id}")]
+        public async Task<IActionResult> UpdateAsync(int id, UpdateCategoryDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var updatedCategory = await _categoryService.UpdateAsync(id, dto);
+            if (updatedCategory is null)
+                return NotFound();
+
+            return Ok(updatedCategory);
+        }
+        [HttpDelete]
+        [Route("{id}")]
+        public async Task<IActionResult> DeleteAsync(int id)
+        {
+            var result = await _categoryService.DeleteAsync(id);
+            if (!result)
+                return NotFound();
+            return NoContent();
+
+        }
+        [HttpPatch]
+        [Route("{id}")]
+        public async Task<IActionResult> ChangeStatusAsync(int id)
+        {
+            var result = await _categoryService.ChangeStatusAsync(id);
+            if (!result)
+                return NotFound();
+            return NoContent();
+        }
+    }
+}
