@@ -1,4 +1,5 @@
 ﻿using Ecommerce.API.DTOs.Requests.Authentication;
+using Ecommerce.API.Utility;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
@@ -51,7 +52,7 @@ namespace Ecommerce.API.Controllers
 
             //await _signInManger.SignInAsync(user, false); // Automatic login
 
-            //await _userManager.AddToRoleAsync(user, SD.CUSTOMER_AREA);
+            await _userManager.AddToRoleAsync(user, SD.CUSTOMER_ROLE);
 
             return Ok(new APIResponse()
             {

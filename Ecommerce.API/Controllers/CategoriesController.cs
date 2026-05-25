@@ -17,12 +17,13 @@ namespace Ecommerce.API.Controllers
         }
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> GetAllAsync([FromQuery] FilterCategoryDto filter, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetAllAsync([FromQuery] FilterCategoryDto filter,
+            [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var result = await _categoryService.GetAll(filter, pageNumber, pageSize);
            
             return Ok(new CategoryResponseDto
-            {
+            {   
                 Categories = result.Categories,
 
                 TotalPages = result.TotalPages,
