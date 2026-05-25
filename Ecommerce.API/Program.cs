@@ -1,8 +1,12 @@
-
-using Ecommerce.API.Data;
 using Ecommerce.API.Repositories;
 using Ecommerce.API.Services;
+using Ecommerce.API.Utility;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using System.Text;
 
 namespace Ecommerce.API
 {
@@ -27,6 +31,53 @@ namespace Ecommerce.API
             builder.Services.AddScoped<IBrandService, BrandService>();
 
             builder.Services.AddScoped<IImageService, ImageService>();
+            builder.Services.AddScoped<IAccountService, AccountService>();
+            builder.Services.AddTransient<IEmailSender, EmailSender>();
+            builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+            builder.Services.AddScoped<IRepository<ApplicationUserOTP>, Repository<ApplicationUserOTP>>();
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+                options.Password.RequiredLength = 8;
+                options.SignIn.RequireConfirmedEmail = false;
+            })
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddDefaultTokenProviders();
+            //builder.Services.AddAuthentication(options =>
+            //{
+            //    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            //    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            //})
+            //    .AddJwtBearer(options =>
+            //{
+            //    options.TokenValidationParameters = new TokenValidationParameters
+
+
+            //{
+
+            //ValidateIssuer = true,
+            //ValidateAudience = true,
+            //ValidateLifetime = true,
+            //ValidateIssuerSigningKey = true,
+
+            //ValidIssuer = builder.Configuration["JWT:ValidIssuer"],
+            //ValidAudience = builder.Configuration["JWT:ValidAudience"],
+
+            //IssuerSigningKey = new SymmetricSecurityKey(
+            //Encoding.UTF8.GetBytes(
+            //    builder.Configuration["JWT:Secret"]!
+            //))
+
+            //}; 
+            //            options.Events = new JwtBearerEvents
+            //{
+            //    OnAuthenticationFailed = context =>
+            //    {
+            //        Console.WriteLine(context.Exception.Message);
+            //        return Task.CompletedTask;
+            //    }
+            //};
+            //});
             builder.Services.AddControllers();
             //builder.Services.AddEndpointsApiExplorer();
             //builder.Services.AddSwaggerGen();
@@ -43,12 +94,15 @@ namespace Ecommerce.API
                 app.MapOpenApi();
                 app.MapScalarApiReference();
             }
+            var scope = app.Services.CreateScope();
+            var service = scope.ServiceProvider.GetService<IDbInitializer>();
+            service.Initialize();
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
+            app.UseAuthentication();
             app.UseAuthorization();
-
 
             app.MapControllers();
 

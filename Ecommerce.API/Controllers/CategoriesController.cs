@@ -1,7 +1,10 @@
 ﻿using Ecommerce.API.Services;
+using Ecommerce.API.Utility;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Ecommerce.API.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class CategoriesController : ControllerBase
@@ -13,6 +16,7 @@ namespace Ecommerce.API.Controllers
             _categoryService = categoryService;
         }
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAllAsync([FromQuery] FilterCategoryDto filter, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var result = await _categoryService.GetAll(filter, pageNumber, pageSize);
@@ -27,6 +31,7 @@ namespace Ecommerce.API.Controllers
             });
         }
         [HttpGet("{id}", Name = "GetCategoryById")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetByIdAsync(int id)
         {
             var category = await _categoryService.GetByIdAsync(id);
@@ -44,6 +49,7 @@ namespace Ecommerce.API.Controllers
             return Ok(categoryItemDto);
         }
         [HttpPost]
+        [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]
         public async Task<IActionResult> CreateAsync(CreateCategoryDto dto)
         {
             if (!ModelState.IsValid)
@@ -71,6 +77,7 @@ namespace Ecommerce.API.Controllers
         
         [HttpPut]
         [Route("{id}")]
+        [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]
         public async Task<IActionResult> UpdateAsync(int id, UpdateCategoryDto dto)
         {
             if (!ModelState.IsValid)
@@ -83,6 +90,7 @@ namespace Ecommerce.API.Controllers
         }
         [HttpDelete]
         [Route("{id}")]
+        [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]
         public async Task<IActionResult> DeleteAsync(int id)
         {
             var result = await _categoryService.DeleteAsync(id);

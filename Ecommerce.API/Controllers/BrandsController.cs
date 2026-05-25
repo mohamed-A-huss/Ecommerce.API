@@ -1,5 +1,9 @@
-﻿namespace Ecommerce.API.Controllers
+﻿using Ecommerce.API.Utility;
+using Microsoft.AspNetCore.Authorization;
+
+namespace Ecommerce.API.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class BrandsController : ControllerBase
@@ -11,6 +15,7 @@
             _brandService = brandService;
         }
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAllAsync([FromQuery] FilterBrandDto filter, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var result = await _brandService.GetAll(filter, pageNumber, pageSize);
@@ -25,6 +30,7 @@
             });
         }
         [HttpGet("{id}", Name = "GetBrandById")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetByIdAsync(int id)
         {
             var brand = await _brandService.GetByIdAsync(id);
@@ -42,6 +48,7 @@
             return Ok(brandItemDto);
         }
         [HttpPost]
+        [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]
         public async Task<IActionResult> CreateAsync([FromForm] CreateBrandDto dto)
         {
             if (!ModelState.IsValid)
@@ -68,6 +75,7 @@
                 new { id = response.Id },response);}
         [HttpPut]
         [Route("{id}")]
+        [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]
         public async Task<IActionResult> UpdateAsync(int id, [FromForm] UpdateBrandDto dto)
         {
             if (!ModelState.IsValid)
@@ -87,6 +95,7 @@
         }
         [HttpDelete]
         [Route("{id}")]
+        [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]
         public async Task<IActionResult> DeleteAsync(int id)
         {
             var result = await _brandService.DeleteAsync(id);
@@ -96,6 +105,7 @@
 
         }
         [HttpPatch("{id}/status")]
+        [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]
         public async Task<IActionResult> ChangeStatusAsync(int id)
         {
             var result = await _brandService.ChangeStatusAsync(id);

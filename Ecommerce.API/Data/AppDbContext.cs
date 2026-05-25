@@ -1,8 +1,8 @@
-﻿
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace Ecommerce.API.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<ApplicationUser>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
@@ -10,6 +10,7 @@ namespace Ecommerce.API.Data
         public DbSet<Product> Products => Set<Product>();
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Brand> Brands => Set<Brand>();
+        public DbSet<ApplicationUserOTP> ApplicationUserOTPs { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
