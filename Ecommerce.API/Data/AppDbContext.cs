@@ -11,6 +11,10 @@ namespace Ecommerce.API.Data
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Brand> Brands => Set<Brand>();
         public DbSet<ApplicationUserOTP> ApplicationUserOTPs { get; set; }
+        public DbSet<UserReview> UserReviews { get; set; }
+        public DbSet<Cart> Carts { get; set; }
+        public DbSet<Promotion> Promotions { get; set; }
+        public DbSet<favoriteItem> FavoriteItems { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

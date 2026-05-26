@@ -40,14 +40,8 @@ namespace Ecommerce.API.Controllers
                 return NotFound();
 
 
-            CategoryItemDto categoryItemDto = new CategoryItemDto
-            {
-                Id = category.Id,
-                Name = category.Name,
-                Status = category.Status,
-                
-            };
-            return Ok(categoryItemDto);
+           
+            return Ok(category);
         }
         [HttpPost]
         [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]
@@ -56,24 +50,15 @@ namespace Ecommerce.API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            Category? createdCategory = await _categoryService.CreateAsync(dto);
+            var createdCategory = await _categoryService.CreateAsync(dto);
             if (createdCategory is null)
             {
                 return BadRequest();
             }
 
-            CategoryItemDto response = new()
-            {
-                Id = createdCategory.Id,
-                Name = createdCategory.Name,
-                Status = createdCategory.Status
-            };
-
-
-
             return CreatedAtRoute(
                 "GetCategoryById",
-                new { id = response.Id }, response);
+                new { id = createdCategory.Id }, createdCategory);
         }
         
         [HttpPut]
@@ -89,6 +74,8 @@ namespace Ecommerce.API.Controllers
 
             return Ok(updatedCategory);
         }
+
+
         [HttpDelete]
         [Route("{id}")]
         [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]

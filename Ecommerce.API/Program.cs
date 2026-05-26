@@ -20,7 +20,7 @@ namespace Ecommerce.API
             builder.Configuration.GetConnectionString("DefaultConnection")));
 
             // Add services to the container.
-
+            builder.Services.AddScoped<IRepository<Product>, Repository<Product>>();
             builder.Services.AddScoped<IProductRepository, ProductRepository>();
             builder.Services.AddScoped<IProductService, ProductService>();
 
@@ -29,11 +29,23 @@ namespace Ecommerce.API
 
             builder.Services.AddScoped<IBrandRepository, BrandRepository>();
             builder.Services.AddScoped<IBrandService, BrandService>();
+            
+            builder.Services.AddScoped<IRepository<Cart>, Repository<Cart>>();
+            builder.Services.AddScoped<ICartRepository, CartRepository>();
+            builder.Services.AddScoped<ICartService, CartService>();
+
+            builder.Services.AddScoped<IRepository<Promotion>, Repository<Promotion>>();
+            builder.Services.AddScoped<IPromotionService, PromotionService>();
+
+            builder.Services.AddScoped<IRepository<favoriteItem>, Repository<favoriteItem>>();
+            builder.Services.AddScoped<IRepository<UserReview>, Repository<UserReview>>();
 
             builder.Services.AddScoped<IImageService, ImageService>();
             builder.Services.AddScoped<IAccountService, AccountService>();
             builder.Services.AddTransient<IEmailSender, EmailSender>();
             builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+
+
             builder.Services.AddScoped<IRepository<ApplicationUserOTP>, Repository<ApplicationUserOTP>>();
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {

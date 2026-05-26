@@ -7,9 +7,9 @@ namespace Ecommerce.API.Interfaces
     public interface ICategoryService
     {
         Task<PaginatedCategoryResponseDto> GetAll(FilterCategoryDto filter, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
-        Task<Category?> GetByIdAsync(int id);
-        Task<Category?> CreateAsync(CreateCategoryDto dto);
-        Task<Category?> UpdateAsync(int id, UpdateCategoryDto dto);
+        Task<CategoryItemDto?> GetByIdAsync(int id);
+        Task<CategoryItemDto?> CreateAsync(CreateCategoryDto dto);
+        Task<CategoryItemDto?> UpdateAsync(int id, UpdateCategoryDto dto);
         Task<bool> DeleteAsync(int id);
         Task<bool> ChangeStatusAsync(int id);
     }

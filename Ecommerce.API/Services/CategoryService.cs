@@ -72,7 +72,7 @@ namespace Ecommerce.API.Services
 
 
 
-        public async Task<Category?> CreateAsync(CreateCategoryDto dto)
+        public async Task<CategoryItemDto?> CreateAsync(CreateCategoryDto dto)
         {
             var newCategory = new Category
             {
@@ -90,7 +90,13 @@ namespace Ecommerce.API.Services
                 return null;
             }
             _logger.LogInformation("Category with id {id} was created", newCategory.Id);
-            return newCategory;
+            CategoryItemDto response = new()
+            {
+                Id = newCategory.Id,
+                Name = newCategory.Name,
+                Status = newCategory.Status
+            };
+            return response;
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -109,7 +115,7 @@ namespace Ecommerce.API.Services
 
         
 
-        public async Task<Category?> GetByIdAsync(int id)
+        public async Task<CategoryItemDto?> GetByIdAsync(int id)
         {
 
            var category =  await _categoryRepository.GetOneAsync(c => c.Id == id);
@@ -120,10 +126,16 @@ namespace Ecommerce.API.Services
             }
             
             _logger.LogInformation("Category with id {id} was found", id);
-            return category;
+            CategoryItemDto response = new()
+            {
+                Id = category.Id,
+                Name = category.Name,
+                Status = category.Status
+            };
+            return response;
         }
 
-        public async Task<Category?> UpdateAsync(int id, UpdateCategoryDto dto)
+        public async Task<CategoryItemDto?> UpdateAsync(int id, UpdateCategoryDto dto)
         {
             var existingCategory =  await _categoryRepository.GetOneAsync(c => c.Id == id);
             if (existingCategory is null)
@@ -146,8 +158,14 @@ namespace Ecommerce.API.Services
             _categoryRepository.Update(existingCategory);
             await _categoryRepository.CommitAsync();
             _logger.LogInformation("Category with id {id} was updated successfully", id);
+            CategoryItemDto response = new()
+            {
+                Id = existingCategory.Id,
+                Name = existingCategory.Name,
+                Status = existingCategory.Status
+            };
 
-            return existingCategory;
+            return response;
         }
 
         public async Task<bool> ChangeStatusAsync(int id)
