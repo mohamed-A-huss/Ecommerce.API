@@ -1,8 +1,11 @@
 ﻿using Ecommerce.API.DTOs.Requests.Cart;
+using Ecommerce.API.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Stripe.Checkout;
+using Stripe.Climate;
 using System.Security.Claims;
 
 namespace Ecommerce.API.Controllers
@@ -13,11 +16,17 @@ namespace Ecommerce.API.Controllers
     public class CartsController : ControllerBase
     {
         private readonly ICartService _cartService;
+        private readonly IRepository<Cart> _cartRepository;
         private readonly UserManager<ApplicationUser> _userManager;
-        public CartsController(ICartService cartService, UserManager<ApplicationUser> userManager)
+        private readonly IRepository<Models.Order> _orderRepository;
+        private readonly IRepository<Models.OrderItem> _orderItemRepository;
+        public CartsController(ICartService cartService, UserManager<ApplicationUser> userManager, IRepository<Cart> cartRepository, IRepository<Models.Order> orderRepository, IRepository<Models.OrderItem> orderItemRepository)
         {
             _cartService = cartService;
             _userManager = userManager;
+            _cartRepository = cartRepository;
+            _orderRepository = orderRepository;
+            _orderItemRepository = orderItemRepository;
         }
         [HttpGet]
         public async Task<IActionResult> Get(string? promotionCode = null, CancellationToken cancellationToken = default)
@@ -80,6 +89,68 @@ namespace Ecommerce.API.Controllers
                 return BadRequest();
             }
             return Ok();
+        }
+        [HttpGet("Pay")]
+        public async Task<IActionResult> Pay()
+        {
+            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return NotFound();
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null) return NotFound();
+
+            var userCart = await _cartRepository
+                .GetAsync(e => e.ApplicationUserId == user.Id,
+                includes: [e => e.Product]);
+
+            Models.Order order = new()
+            {
+                ApplicationUserId = user.Id,
+                TotalPrice = userCart.Sum(e => e.TotalPrice)
+            };
+            await _orderRepository.CreateAsync(order);
+            await _orderRepository.CommitAsync();
+
+            var options = new SessionCreateOptions
+            {
+                PaymentMethodTypes = new List<string> { "card" },
+                LineItems = new List<SessionLineItemOptions>(),
+
+                Mode = "payment",
+                SuccessUrl = $"{Request.Scheme}://{Request.Host}/checkout/success?orderId={order.Id}",
+                CancelUrl = $"{Request.Scheme}://{Request.Host}/checkout/cancel?orderId={order.Id}",
+            };
+
+            foreach (var item in userCart)
+            {
+                options.LineItems.Add(
+                    new SessionLineItemOptions
+                    {
+                        PriceData = new SessionLineItemPriceDataOptions
+                        {
+                            Currency = "usd",
+                            ProductData = new SessionLineItemPriceDataProductDataOptions
+                            {
+                                Name = item.Product.Name,
+                                Description = item.Product.Description,
+                            },
+                            UnitAmount = (long)item.PricePerProduct * 100,
+                        },
+                        Quantity = item.Count,
+                    });
+            }
+
+
+            var service = new SessionService();
+            var session = service.Create(options);
+            order.SessionId = session.Id;
+            await _orderRepository.CommitAsync();
+
+            return Ok(new APIResponse()
+            {
+                StatusCode = 200,
+                Message = [session.Url]
+            });
         }
 
     }

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using Stripe;
 using System.Text;
 
 namespace Ecommerce.API
@@ -20,9 +21,9 @@ namespace Ecommerce.API
             builder.Configuration.GetConnectionString("DefaultConnection")));
 
             // Add services to the container.
-            builder.Services.AddScoped<IRepository<Product>, Repository<Product>>();
+            builder.Services.AddScoped<IRepository<Models.Product>, Repository<Models.Product>>();
             builder.Services.AddScoped<IProductRepository, ProductRepository>();
-            builder.Services.AddScoped<IProductService, ProductService>();
+            builder.Services.AddScoped<IProductService, Services.ProductService>();
 
             builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
             builder.Services.AddScoped<ICategoryService, CategoryService>();
@@ -40,13 +41,20 @@ namespace Ecommerce.API
             builder.Services.AddScoped<IRepository<favoriteItem>, Repository<favoriteItem>>();
             builder.Services.AddScoped<IRepository<UserReview>, Repository<UserReview>>();
 
+            builder.Services.AddScoped<IRepository<Order>, Repository<Order>>();
+            builder.Services.AddScoped<IRepository<OrderItem>, Repository<OrderItem>>();
+
             builder.Services.AddScoped<IImageService, ImageService>();
-            builder.Services.AddScoped<IAccountService, AccountService>();
-            builder.Services.AddTransient<IEmailSender, EmailSender>();
+            builder.Services.AddScoped<IAccountService, Services.AccountService>();
             builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 
 
             builder.Services.AddScoped<IRepository<ApplicationUserOTP>, Repository<ApplicationUserOTP>>();
+            builder.Services.AddTransient<IEmailSender, EmailSender>();
+
+            builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
+            Stripe.StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
+
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
                 options.User.RequireUniqueEmail = true;
@@ -55,41 +63,7 @@ namespace Ecommerce.API
             })
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
-            //builder.Services.AddAuthentication(options =>
-            //{
-            //    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            //    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            //})
-            //    .AddJwtBearer(options =>
-            //{
-            //    options.TokenValidationParameters = new TokenValidationParameters
-
-
-            //{
-
-            //ValidateIssuer = true,
-            //ValidateAudience = true,
-            //ValidateLifetime = true,
-            //ValidateIssuerSigningKey = true,
-
-            //ValidIssuer = builder.Configuration["JWT:ValidIssuer"],
-            //ValidAudience = builder.Configuration["JWT:ValidAudience"],
-
-            //IssuerSigningKey = new SymmetricSecurityKey(
-            //Encoding.UTF8.GetBytes(
-            //    builder.Configuration["JWT:Secret"]!
-            //))
-
-            //}; 
-            //            options.Events = new JwtBearerEvents
-            //{
-            //    OnAuthenticationFailed = context =>
-            //    {
-            //        Console.WriteLine(context.Exception.Message);
-            //        return Task.CompletedTask;
-            //    }
-            //};
-            //});
+            
             builder.Services.AddControllers();
             //builder.Services.AddEndpointsApiExplorer();
             //builder.Services.AddSwaggerGen();
