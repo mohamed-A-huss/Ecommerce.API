@@ -1,6 +1,8 @@
 ﻿using Ecommerce.API.Services;
 using Ecommerce.API.Utility;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
 
 namespace Ecommerce.API.Controllers
 {
@@ -10,10 +12,12 @@ namespace Ecommerce.API.Controllers
     public class CategoriesController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public CategoriesController(ICategoryService categoryService)
+        public CategoriesController(ICategoryService categoryService, UserManager<ApplicationUser> userManager)
         {
             _categoryService = categoryService;
+            _userManager = userManager;
         }
         [HttpGet]
         [AllowAnonymous]
@@ -47,6 +51,11 @@ namespace Ecommerce.API.Controllers
         [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]
         public async Task<IActionResult> CreateAsync(CreateCategoryDto dto)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Unauthorized();
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
@@ -66,6 +75,11 @@ namespace Ecommerce.API.Controllers
         [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]
         public async Task<IActionResult> UpdateAsync(int id, UpdateCategoryDto dto)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Unauthorized();
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             var updatedCategory = await _categoryService.UpdateAsync(id, dto);
@@ -81,6 +95,11 @@ namespace Ecommerce.API.Controllers
         [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]
         public async Task<IActionResult> DeleteAsync(int id)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Unauthorized();
+
             var result = await _categoryService.DeleteAsync(id);
             if (!result)
                 return NotFound();
@@ -89,8 +108,14 @@ namespace Ecommerce.API.Controllers
         }
         [HttpPatch]
         [Route("{id}")]
+        [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]
         public async Task<IActionResult> ChangeStatusAsync(int id)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Unauthorized();
+
             var result = await _categoryService.ChangeStatusAsync(id);
             if (!result)
                 return NotFound();

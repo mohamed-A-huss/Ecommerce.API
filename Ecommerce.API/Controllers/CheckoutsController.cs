@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Stripe.Checkout;
+using System.Security.Claims;
 
 namespace Ecommerce.API.Controllers
 {
@@ -16,23 +18,31 @@ namespace Ecommerce.API.Controllers
         private readonly IRepository<OrderItem> _orderItemRepository;
         private readonly ILogger<CheckoutsController> _logger;
         private readonly ICartRepository _cartRepository;
+        private readonly UserManager<ApplicationUser> _userManager;
+
 
         public CheckoutsController(IRepository<Order> orderRepository,
             AppDbContext context,
             ILogger<CheckoutsController> logger,
             ICartRepository cartRepository,
-            IRepository<OrderItem> orderItemRepository)
+            IRepository<OrderItem> orderItemRepository,
+            UserManager<ApplicationUser> userManager)
         {
             _orderRepository = orderRepository;
             _context = context;
             _logger = logger;
             _cartRepository = cartRepository;
             _orderItemRepository = orderItemRepository;
+            _userManager = userManager;
         }
 
         [HttpGet("{orderId}/Success")]
         public async Task<IActionResult> Success(int orderId)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Unauthorized();
             var transaction = _context.Database.BeginTransaction();
 
             try

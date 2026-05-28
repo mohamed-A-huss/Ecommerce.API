@@ -1,18 +1,22 @@
 ﻿using Ecommerce.API.Utility;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
 
 namespace Ecommerce.API.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class BrandsController : ControllerBase
     {
         private readonly IBrandService _brandService;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public BrandsController(IBrandService brandService)
+        public BrandsController(IBrandService brandService, UserManager<ApplicationUser> userManager)
         {
             _brandService = brandService;
+            _userManager = userManager;
         }
         [HttpGet]
         [AllowAnonymous]
@@ -35,7 +39,7 @@ namespace Ecommerce.API.Controllers
         {
             var brand = await _brandService.GetByIdAsync(id);
             if (brand is null)
-                return NotFound();
+                return Unauthorized();
 
 
             BrandItemDto brandItemDto = new BrandItemDto
@@ -51,9 +55,13 @@ namespace Ecommerce.API.Controllers
         [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]
         public async Task<IActionResult> CreateAsync([FromForm] CreateBrandDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Unauthorized();
 
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);            
             Brand? createdBrand = await _brandService.CreateAsync(dto);
 
             if (createdBrand is null)
@@ -78,12 +86,16 @@ namespace Ecommerce.API.Controllers
         [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]
         public async Task<IActionResult> UpdateAsync(int id, [FromForm] UpdateBrandDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Unauthorized();
             var updatedBrand = await _brandService.UpdateAsync(id, dto);
             if (updatedBrand is null)
                 return NotFound();
-
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
             return Ok(new BrandItemDto
             {
                 Id = updatedBrand.Id,
@@ -97,7 +109,12 @@ namespace Ecommerce.API.Controllers
         [Route("{id}")]
         [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]
         public async Task<IActionResult> DeleteAsync(int id)
+
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Unauthorized();
             var result = await _brandService.DeleteAsync(id);
             if (!result)
                 return NotFound();
@@ -108,6 +125,11 @@ namespace Ecommerce.API.Controllers
         [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]
         public async Task<IActionResult> ChangeStatusAsync(int id)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Unauthorized();
+
             var result = await _brandService.ChangeStatusAsync(id);
             if (!result)
                 return NotFound();

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Ecommerce.API.Controllers
 {
@@ -29,6 +30,10 @@ namespace Ecommerce.API.Controllers
                                                 int page = 1,
                                                 int pageSize = 10)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var Currentuser = await _userManager.GetUserAsync(User);
+            if (Currentuser is null) return Unauthorized();
             var users = _userManager.Users.AsQueryable();
 
             // Filter
@@ -80,9 +85,15 @@ namespace Ecommerce.API.Controllers
         [HttpGet("{id}", Name = "GetUserById")]
         public async Task<IActionResult> GetByIdAsync(string id)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var Currentuser = await _userManager.GetUserAsync(User);
+            if (Currentuser is null) return Unauthorized();
             var user = await _userManager.FindByIdAsync(id);
             if (user is null)
                 return NotFound();
+
+
 
 
             var userItemDto = new UserItemDto
@@ -101,6 +112,10 @@ namespace Ecommerce.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateRole(string id,UpdateUserRoleDto dto)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var Currentuser = await _userManager.GetUserAsync(User);
+            if (Currentuser is null) return Unauthorized();
             var user = await _userManager.FindByIdAsync(id);
 
             if (user is null)
@@ -129,6 +144,10 @@ namespace Ecommerce.API.Controllers
 
         public async Task<IActionResult> LockUnLock(string id)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var Currentuser = await _userManager.GetUserAsync(User);
+            if (Currentuser is null) return Unauthorized();
             var user = await _userManager.FindByIdAsync(id);
             if (user is null) return NotFound();
 
@@ -146,6 +165,21 @@ namespace Ecommerce.API.Controllers
             await _userManager.UpdateAsync(user);
 
             return Ok(user);
+        }
+        [HttpGet("GetCurrentUser")]
+        [Authorize]
+        public async Task<IActionResult> GetCurrentUserAsync()
+        {
+            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return NotFound();
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null) return NotFound();
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var role = roles.FirstOrDefault() ?? "No Role";
+
+            return Ok($"Authenticated: {user.UserName}, Email: {user.Email}, First Name: {user.FirstName}, Last Name: {user.LastName}, Role: {role}");
         }
     }
 }

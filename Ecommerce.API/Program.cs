@@ -42,6 +42,8 @@ namespace Ecommerce.API
             builder.Services.AddScoped<IRepository<UserReview>, Repository<UserReview>>();
 
             builder.Services.AddScoped<IRepository<Order>, Repository<Order>>();
+            builder.Services.AddScoped<IOrderService, OrderService>();
+
             builder.Services.AddScoped<IRepository<OrderItem>, Repository<OrderItem>>();
 
             builder.Services.AddScoped<IImageService, ImageService>();

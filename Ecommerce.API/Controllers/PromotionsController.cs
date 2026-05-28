@@ -4,7 +4,9 @@ using Ecommerce.API.Services;
 using Ecommerce.API.Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Ecommerce.API.Controllers
 {
@@ -14,15 +16,20 @@ namespace Ecommerce.API.Controllers
     public class PromotionsController : ControllerBase
     {
         private readonly IPromotionService _promotionService;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public PromotionsController(IPromotionService promotionService)
+        public PromotionsController(IPromotionService promotionService, UserManager<ApplicationUser> userManager)
         {
             _promotionService = promotionService;
+            _userManager = userManager;
         }
         [HttpGet]
         public async Task<IActionResult> GetAllAsync([FromQuery] FilterPromotionDto filter,[FromQuery] int pageNumber=1, [FromQuery] int pageSize=10)
         {
-
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Unauthorized();
             var result = await _promotionService.GetAll(filter, pageNumber, pageSize);
 
             return Ok(new PaginatedPromotionResponseDto
@@ -39,6 +46,11 @@ namespace Ecommerce.API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetByIdAsync(int id)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Unauthorized();
+
             var result = await _promotionService.GetByIdAsync(id);
             if (result is null)
             {
@@ -49,6 +61,11 @@ namespace Ecommerce.API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateAsync([FromBody] CreatePromotionDto dto)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Unauthorized();
+
             var result = await _promotionService.CreateAsync(dto);
             if (result is null)
             {
@@ -59,6 +76,11 @@ namespace Ecommerce.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAsync(int id, [FromBody] UpdatePromotionDto dto)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Unauthorized();
+
             var result = await _promotionService.UpdateAsync(id, dto);
             if (result is null)
             {
@@ -69,6 +91,11 @@ namespace Ecommerce.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAsync(int id)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null) return Unauthorized();
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null) return Unauthorized();
+
             var result = await _promotionService.DeleteAsync(id);
             if (!result)
             {

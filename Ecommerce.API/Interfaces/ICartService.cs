@@ -12,6 +12,7 @@ namespace Ecommerce.API.Interfaces
 
          Task<bool> DecrementCount(int productId, string userId);
         Task<bool> Delete(int productId, string userId);
+        Task<List<CartPricingItem>> ApplyPromotionAsync(List<Cart> userCart, string? promotionCode);
 
 
     }

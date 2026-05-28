@@ -27,111 +27,45 @@ namespace Ecommerce.API.Services
         {
             string message = string.Empty;
 
-            var user = await _userManager.FindByIdAsync(userId);
-
-            if (user is null)
-            {
-                return new CartResponse()
-                {
-                    Carts = null,
-                    Message = ["User not found"]
-                };
-            }
+            
 
             var userCart = (await _cartRepository.GetAsync(
-                e => e.ApplicationUserId == user.Id,
+                e => e.ApplicationUserId == userId,
                 includes: [e => e.Product],
                 cancellationToken: cancellationToken))
                 .ToList();
 
             // Convert cart to response items first
-            var cartItems = userCart.Select(e => new CartItem
-            {
-                ProductId = e.ProductId,
-                Count = e.Count,
-                PricePerProduct = e.PricePerProduct,
-                TotalPrice = e.PricePerProduct * e.Count
-            }).ToList();
-
-            // Apply promotion only in response
-            if (!string.IsNullOrWhiteSpace(promotionCode))
-            {
-                var promotion = await _promotionRepository.GetOneAsync(
-                    e => e.Code == promotionCode && e.Usage > 0);
-
-                if (promotion is null)
-                {
-                    return new CartResponse()
-                    {
-                        Carts = cartItems,
-                        Message = ["Invalid promotion"]
-                    };
-                }
-
-                // Promotion on whole cart
-                if (promotion.ProductId is null)
-                {
-                    foreach (var item in cartItems)
-                    {
-                        var discountedPrice =
-                            item.PricePerProduct -
-                            (item.PricePerProduct * promotion.Discount / 100);
-
-                        item.PricePerProduct = discountedPrice;
-                        item.TotalPrice = discountedPrice * item.Count;
-                    }
-
-                    message = "Promotion applied successfully";
-                }
-                else
-                {
-                    bool applied = false;
-
-                    foreach (var item in cartItems)
-                    {
-                        if (item.ProductId == promotion.ProductId)
-                        {
-                            var discountedPrice =
-                                item.PricePerProduct -
-                                (item.PricePerProduct * promotion.Discount / 100);
-
-                            item.PricePerProduct = discountedPrice;
-                            item.TotalPrice = discountedPrice * item.Count;
-
-                            applied = true;
-                        }
-                    }
-
-                    message = applied
-                        ? "Promotion applied successfully"
-                        : "Can not apply this promotion code on the current cart";
-                }
-            }
+            var pricingCart = await ApplyPromotionAsync(userCart, promotionCode);
 
             return new CartResponse()
             {
-                Carts = cartItems,
+                Carts = pricingCart.Select(e => new CartItem
+                {
+                    ProductId = e.ProductId,
+                    Count = e.Count,
+                    PricePerProduct = e.FinalPrice,
+                    TotalPrice = e.TotalPrice
+                }),
                 Message = [message]
             };
         }
         public async Task<bool> AddToCart(CartCreateRequest cartCreateRequest,string userId, CancellationToken cancellationToken)
         {
-            //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            //if (userId is null) return false;
+            
 
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user is null) return false;
+            
 
             var product = await _productRepository.GetOneAsync(e => e.Id == cartCreateRequest.productId, cancellationToken: cancellationToken);
             if (product is null) return false;
 
-            var cart = await _cartRepository.GetOneAsync(e => e.ProductId == cartCreateRequest.productId && e.ApplicationUserId == user.Id);
+            var cart = await _cartRepository.GetOneAsync(e => e.ProductId == cartCreateRequest.productId && e.ApplicationUserId == userId);
 
             if (cart is null)
             {
                 await _cartRepository.CreateAsync(new()
                 {
-                    ApplicationUserId = user.Id,
+                    ApplicationUserId = userId,
                     ProductId = cartCreateRequest.productId,
                     Count = cartCreateRequest.count,
                     PricePerProduct = (double)product.Price,
@@ -154,10 +88,9 @@ namespace Ecommerce.API.Services
         {
             
 
-            var user = await _userManager.FindByIdAsync( userId);
-            if (user is null) return false;
+            
 
-            var cart = await _cartRepository.GetOneAsync(e => e.ProductId == productId && e.ApplicationUserId == user.Id);
+            var cart = await _cartRepository.GetOneAsync(e => e.ProductId == productId && e.ApplicationUserId == userId);
 
             if (cart is null) return false;
 
@@ -169,10 +102,9 @@ namespace Ecommerce.API.Services
 
         public async Task<bool> DecrementCount(int productId, string userId)
         {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user is null) return false;
+            
 
-            var cart = await _cartRepository.GetOneAsync(e => e.ProductId == productId && e.ApplicationUserId == user.Id);
+            var cart = await _cartRepository.GetOneAsync(e => e.ProductId == productId && e.ApplicationUserId == userId);
 
             if (cart is null) return false;
 
@@ -188,10 +120,9 @@ namespace Ecommerce.API.Services
         {
             
 
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user is null) return false;
+            
 
-            var cart = await _cartRepository.GetOneAsync(e => e.ProductId == productId && e.ApplicationUserId == user.Id);
+            var cart = await _cartRepository.GetOneAsync(e => e.ProductId == productId && e.ApplicationUserId == userId);
 
             if (cart is null) return false;
 
@@ -199,6 +130,58 @@ namespace Ecommerce.API.Services
             await _cartRepository.CommitAsync();
 
             return true;
+        }
+        public async Task<List<CartPricingItem>> ApplyPromotionAsync(List<Cart> userCart,string? promotionCode)
+        {
+            var cartItems = userCart.Select(e => new CartPricingItem
+            {
+                ProductId = e.ProductId,
+                ProductName = e.Product.Name,
+                Count = e.Count,
+
+                OriginalPrice = e.PricePerProduct,
+
+                FinalPrice = e.PricePerProduct
+            }).ToList();
+
+            if (string.IsNullOrWhiteSpace(promotionCode))
+            {
+                return cartItems;
+            }
+
+            var promotion = await _promotionRepository
+                .GetOneAsync(e =>
+                    e.Code == promotionCode &&
+                    e.Usage > 0);
+
+            if (promotion is null)
+            {
+                return cartItems;
+            }
+
+            if (promotion.ProductId is null)
+            {
+                foreach (var item in cartItems)
+                {
+                    item.FinalPrice =
+                        item.FinalPrice -
+                        (item.FinalPrice * promotion.Discount / 100);
+                }
+            }
+            else
+            {
+                foreach (var item in cartItems)
+                {
+                    if (item.ProductId == promotion.ProductId)
+                    {
+                        item.FinalPrice =
+                            item.FinalPrice -
+                            (item.FinalPrice * promotion.Discount / 100);
+                    }
+                }
+            }
+
+            return cartItems;
         }
 
     }

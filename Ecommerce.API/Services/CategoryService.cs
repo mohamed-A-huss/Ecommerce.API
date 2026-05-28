@@ -18,6 +18,7 @@ namespace Ecommerce.API.Services
         {
             string applyFilter = "Applied filters: ";
             var categories =  await _categoryRepository.GetAsync();
+
             if (categories.Count() == 0)
             {
                 _logger.LogInformation("No categories found");
