@@ -4,5 +4,6 @@
     {
         Task<bool> SendConfirmationMailAsync(ApplicationUser user, IUrlHelper url, HttpRequest request);
         Task<bool> SendOTPToMailAsync(ApplicationUser user);
+        Task<string?> GenerateTokenAsync(string userId, string email);
     }
 }

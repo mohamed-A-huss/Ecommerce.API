@@ -1,9 +1,7 @@
-using Ecommerce.API.Repositories;
-using Ecommerce.API.Services;
-using Ecommerce.API.Utility;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Stripe;
@@ -16,10 +14,13 @@ namespace Ecommerce.API
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            
+
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(
             builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            
             // Add services to the container.
             builder.Services.AddScoped<IRepository<Models.Product>, Repository<Models.Product>>();
             builder.Services.AddScoped<IProductRepository, ProductRepository>();
@@ -65,13 +66,36 @@ namespace Ecommerce.API
             })
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
-            
-            builder.Services.AddControllers();
             //builder.Services.AddEndpointsApiExplorer();
             //builder.Services.AddSwaggerGen();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
+            IdentityModelEventSource.ShowPII = true;
+            builder.Services.AddControllers();
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+        .AddJwtBearer(options =>
+        {
 
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = builder.Configuration["JWT:Issuer"],
+
+                ValidateAudience = true,
+                ValidAudience = builder.Configuration["JWT:Audience"],
+
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero,
+
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]!))
+            };
+            
+        });
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

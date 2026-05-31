@@ -11,13 +11,13 @@ namespace Ecommerce.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountController : ControllerBase
+    public class AccountsController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IAccountService _accountService;
 
-        public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IAccountService accountService)
+        public AccountsController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IAccountService accountService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -86,7 +86,8 @@ namespace Ecommerce.API.Controllers
 
                     return BadRequest(ModelState);
                 }
-                string token = null; //await _jWTHandler.GenerateTokenAsync(user.Id, user.Email!);
+                string? token = await _accountService.GenerateTokenAsync(user.Id, user.Email!);
+                Console.WriteLine(token);
                 return Ok(new APIResponse()
                 {
                     StatusCode = 200,

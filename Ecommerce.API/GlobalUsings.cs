@@ -14,3 +14,6 @@ global using Ecommerce.API.DTOs.Responses.Category;
 global using Ecommerce.API.DTOs.Requests.Product;
 global using Ecommerce.API.DTOs.Responses.Product;
 global using Microsoft.AspNetCore.Mvc;
+global using Ecommerce.API.Repositories;
+global using Ecommerce.API.Services;
+global using Ecommerce.API.Utility;
