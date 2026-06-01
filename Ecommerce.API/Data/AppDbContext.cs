@@ -16,7 +16,7 @@ namespace Ecommerce.API.Data
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Promotion> Promotions { get; set; }
-        public DbSet<favoriteItem> FavoriteItems { get; set; }
+        public DbSet<FavoriteItem> FavoriteItems { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

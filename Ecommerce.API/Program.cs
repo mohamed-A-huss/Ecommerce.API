@@ -39,7 +39,9 @@ namespace Ecommerce.API
             builder.Services.AddScoped<IRepository<Promotion>, Repository<Promotion>>();
             builder.Services.AddScoped<IPromotionService, PromotionService>();
 
-            builder.Services.AddScoped<IRepository<favoriteItem>, Repository<favoriteItem>>();
+            builder.Services.AddScoped<IRepository<FavoriteItem>, Repository<FavoriteItem>>();
+            builder.Services.AddScoped<IFavoriteItemService, FavoriteItemService>();
+
             builder.Services.AddScoped<IRepository<UserReview>, Repository<UserReview>>();
 
             builder.Services.AddScoped<IRepository<Order>, Repository<Order>>();

@@ -1,6 +1,6 @@
 ﻿namespace Ecommerce.API.Models
 {
-    public class favoriteItem
+    public class FavoriteItem
     {
         public int Id { get; set; }
 
@@ -9,6 +9,5 @@
         public string ApplicationUserId { get; set; } = string.Empty;
         public ApplicationUser ApplicationUser { get; set; } = null!;
 
-        public double Price { get; set; }
     }
 }
