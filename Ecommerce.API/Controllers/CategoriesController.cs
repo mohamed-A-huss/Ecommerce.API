@@ -26,7 +26,8 @@ namespace Ecommerce.API.Controllers
         {
             var result = await _categoryService.GetAll(filter, pageNumber, pageSize);
            
-            return Ok(new CategoryResponseDto
+            return Ok(new 
+
             {   
                 Categories = result.Categories,
 

@@ -112,7 +112,7 @@ namespace Ecommerce.API.Services
 
 
 
-        public async Task<Product?> CreateAsync([FromForm] CreateProductDto dto)
+        public async Task<ProductItemDto?> CreateAsync([FromForm] CreateProductDto dto)
         {
             try
             {
@@ -137,7 +137,18 @@ namespace Ecommerce.API.Services
                     return null;
                 }
                 _logger.LogInformation("Product with id {id} was created", newProduct.Id);
-                return newProduct;
+                return new ProductItemDto
+                {
+                    Id = newProduct.Id,
+                    Name = newProduct.Name,
+                    MainImg = newProduct.MainImg,
+                    Description = newProduct.Description,
+                    Price = newProduct.Price,
+                    Discount = newProduct.Discount,
+                    Status = newProduct.Status,
+                    BrandName = newProduct.Brand.Name,
+                    CategoryName = newProduct.Category.Name
+                };
             }
             catch (Exception ex)
             {
@@ -192,7 +203,7 @@ namespace Ecommerce.API.Services
             return productItemDto;
         }
 
-        public async Task<Product?> UpdateAsync(int id, [FromForm] UpdateProductDto dto)
+        public async Task<ProductItemDto?> UpdateAsync(int id, [FromForm] UpdateProductDto dto)
         {
             var existingProduct =  await _productRepository.GetOneAsync(p => p.Id == id);
             if (existingProduct is null)
@@ -236,7 +247,18 @@ namespace Ecommerce.API.Services
             await _productRepository.CommitAsync();
             _logger.LogInformation("Product with id {id} was updated successfully", id);
 
-            return existingProduct;
+            return new ProductItemDto
+            {
+                Id = existingProduct.Id,
+                Name = existingProduct.Name,
+                MainImg = existingProduct.MainImg,
+                Description = existingProduct.Description,
+                Price = existingProduct.Price,
+                Discount = existingProduct.Discount,
+                Status = existingProduct.Status,
+                BrandName = existingProduct.Brand.Name,
+                CategoryName = existingProduct.Category.Name
+            };
         }
 
         public async Task<bool> ChangeStatusAsync(int id)

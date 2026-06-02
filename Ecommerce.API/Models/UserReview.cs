@@ -9,7 +9,9 @@
         public string ApplicationUserId { get; set; } = string.Empty;
         public ApplicationUser ApplicationUser { get; set; } = null!;
 
-        public int Rate { get; set; }
         public string Comment { get; set; } = string.Empty;
+        public int Rate { get; set; }
+        public DateTime CreateAt { get; set; } = DateTime.Now;
+        public string? Img { get; set; }
     }
 }

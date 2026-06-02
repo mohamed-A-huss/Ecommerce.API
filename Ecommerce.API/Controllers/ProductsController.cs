@@ -57,7 +57,7 @@ namespace Ecommerce.API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            Product? createdProduct = await _productService.CreateAsync(dto);
+            var createdProduct = await _productService.CreateAsync(dto);
             if (createdProduct is null)
             {
                 return BadRequest();

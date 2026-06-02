@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Stripe;
 using System.Text;
+using ReviewService = Ecommerce.API.Services.ReviewService;
 
 namespace Ecommerce.API
 {
@@ -43,6 +44,7 @@ namespace Ecommerce.API
             builder.Services.AddScoped<IFavoriteItemService, FavoriteItemService>();
 
             builder.Services.AddScoped<IRepository<UserReview>, Repository<UserReview>>();
+            builder.Services.AddScoped<IReviewService, ReviewService>();
 
             builder.Services.AddScoped<IRepository<Order>, Repository<Order>>();
             builder.Services.AddScoped<IOrderService, OrderService>();

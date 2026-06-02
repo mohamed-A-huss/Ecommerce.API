@@ -5,8 +5,8 @@ namespace Ecommerce.API.Interfaces
     {
         Task<PaginatedProductResponseDto> GetAll(FilterProductDto filter, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
         Task<ProductItemDto?> GetByIdAsync(int id);
-        Task<Product?> CreateAsync(CreateProductDto dto);
-        Task<Product?> UpdateAsync(int id, UpdateProductDto dto);
+        Task<ProductItemDto?> CreateAsync(CreateProductDto dto);
+        Task<ProductItemDto?> UpdateAsync(int id, UpdateProductDto dto);
         Task<bool> DeleteAsync(int id);
         Task<bool> ChangeStatusAsync(int id);
     }
