@@ -9,5 +9,7 @@ namespace Ecommerce.API.Interfaces
         Task<ProductItemDto?> UpdateAsync(int id, UpdateProductDto dto);
         Task<bool> DeleteAsync(int id);
         Task<bool> ChangeStatusAsync(int id);
+        Task<Dictionary<string, int>> ProductCountWithCategory();
+        Task<Dictionary<string, int>> ProductCountWithBrand();
     }
 }

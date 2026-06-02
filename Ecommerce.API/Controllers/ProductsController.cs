@@ -46,6 +46,21 @@ namespace Ecommerce.API.Controllers
             
             return Ok(product);
         }
+        [HttpGet("count-by-brand")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetProductCountByBrandAsync()
+        {
+            var productCounts = await _productService.ProductCountWithBrand();
+            return Ok(productCounts);
+        }
+        [HttpGet("count-by-category")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetProductCountByCategoryAsync()
+        {
+            var productCounts = await _productService.ProductCountWithCategory();
+            return Ok(productCounts);
+        }
+
         [HttpPost]
         [Authorize(Roles = $"{SD.SUPER_ADMIN_ROLE},{SD.ADMIN_ROLE}")]
         public async Task<IActionResult> CreateAsync([FromForm] CreateProductDto dto)
@@ -116,6 +131,7 @@ namespace Ecommerce.API.Controllers
                 return NotFound();
             return NoContent();
         }
+
         
     }
 }

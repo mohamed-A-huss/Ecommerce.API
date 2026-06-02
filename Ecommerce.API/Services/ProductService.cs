@@ -274,5 +274,37 @@ namespace Ecommerce.API.Services
             _logger.LogInformation("Product with id {id} was updated", id);
             return true;
         }
+        public async Task<Dictionary<string, int>> ProductCountWithBrand()
+        {
+            var productCounts = await _productRepository.GetAsync(
+                tracked: false,
+                includes: [p => p.Brand]
+            );
+            var groupedCounts = productCounts
+               .GroupBy(p => p.Brand.Name)
+               .Select(g => new
+               {
+                   g.Key,
+                   count = g.Count()
+               }).ToDictionary(x => x.Key, x => x.count);
+               
+            return groupedCounts;
+        }
+        public async Task<Dictionary<string, int>> ProductCountWithCategory()
+        {
+            var productCounts = await _productRepository.GetAsync(
+                tracked: false,
+                includes: [p => p.Category]
+            );
+            var groupedCounts = productCounts
+               .GroupBy(p => p.Category.Name)
+               .Select(g => new
+               {
+                   g.Key,
+                   count = g.Count()
+               }).ToDictionary(x => x.Key, x => x.count);
+
+            return groupedCounts;
+        }
     }
 }
