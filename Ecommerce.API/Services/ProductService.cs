@@ -137,17 +137,20 @@ namespace Ecommerce.API.Services
                     return null;
                 }
                 _logger.LogInformation("Product with id {id} was created", newProduct.Id);
+                var product = await _productRepository.GetOneAsync(
+                            e => e.Id == newProduct.Id,
+                            includes: [e => e.Brand, e => e.Category]);
                 return new ProductItemDto
                 {
-                    Id = newProduct.Id,
-                    Name = newProduct.Name,
-                    MainImg = newProduct.MainImg,
-                    Description = newProduct.Description,
-                    Price = newProduct.Price,
-                    Discount = newProduct.Discount,
-                    Status = newProduct.Status,
-                    BrandName = newProduct.Brand.Name,
-                    CategoryName = newProduct.Category.Name
+                    Id = product!.Id,
+                    Name = product.Name,
+                    MainImg = product.MainImg,
+                    Description = product.Description,
+                    Price = product.Price,
+                    Discount = product.Discount,
+                    Status = product.Status,
+                    BrandName = product.Brand.Name,
+                    CategoryName = product.Category.Name
                 };
             }
             catch (Exception ex)
@@ -205,7 +208,7 @@ namespace Ecommerce.API.Services
 
         public async Task<ProductItemDto?> UpdateAsync(int id, [FromForm] UpdateProductDto dto)
         {
-            var existingProduct =  await _productRepository.GetOneAsync(p => p.Id == id);
+            var existingProduct =  await _productRepository.GetOneAsync(p => p.Id == id, includes: [p => p.Brand, p => p.Category]);
             if (existingProduct is null)
             {
                 _logger.LogWarning("Product with id {id} was not found", id);

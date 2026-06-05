@@ -8,10 +8,12 @@ namespace Ecommerce.API.Services
     {
         private readonly IRepository<Promotion> _promotionRepository;
         private readonly ILogger<BrandService> _logger;
-        public PromotionService(IRepository<Promotion> promotionRepository, ILogger<BrandService> logger)
+        private readonly IProductRepository _productRepository;
+        public PromotionService(IRepository<Promotion> promotionRepository, ILogger<BrandService> logger, IProductRepository productRepository)
         {
             _promotionRepository = promotionRepository;
             _logger = logger;
+            _productRepository = productRepository;
         }
         public async Task<PaginatedPromotionResponseDto> GetAll(FilterPromotionDto filter, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
         {
@@ -84,7 +86,18 @@ namespace Ecommerce.API.Services
 
         public async Task<PromotionItemDto?> CreateAsync(CreatePromotionDto dto)
         {
-            var newPromotion = new Promotion
+            var existingPromotion = await _promotionRepository.GetOneAsync(p => p.Code.ToLower() == dto.Code.ToLower());
+            if (existingPromotion is null)
+            {
+                _logger.LogError("Promotion with code {code} already exists", dto.Code);
+                return null;
+            }
+            var product= await _productRepository.GetOneAsync(p => p.Id == dto.ProductId);
+            if (product is null) {
+                _logger.LogError("Product with id {id} was not found", dto.ProductId);
+                return null;
+            }
+            Promotion newPromotion = new Promotion
             {
                 Discount = dto.Discount,
                 Code = dto.Code,                
