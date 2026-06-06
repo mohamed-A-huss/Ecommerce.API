@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Ecommerce.API.Services
@@ -103,5 +104,11 @@ namespace Ecommerce.API.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+        
+        public string GenerateRefreshToken()
+        {
+            return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+        }
     }
+
 }

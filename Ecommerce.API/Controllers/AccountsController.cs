@@ -1,5 +1,7 @@
-﻿using Ecommerce.API.DTOs.Requests.Authentication;
+﻿using Ecommerce.API.DTOs.Requests.Account;
+using Ecommerce.API.DTOs.Requests.Authentication;
 using Ecommerce.API.Utility;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
@@ -60,40 +62,116 @@ namespace Ecommerce.API.Controllers
             });
         }
 
-            [HttpPost("login")]
-            public async Task<IActionResult> LoginAsync(LoginDto loginRequest)
+        [HttpPost("login")]
+        public async Task<IActionResult> LoginAsync(LoginDto loginRequest)
+        {
+            var user = await _userManager.FindByEmailAsync(loginRequest.UserNameOrEmail) ??
+                await _userManager.FindByNameAsync(loginRequest.UserNameOrEmail);
+
+            if (user is null)
             {
-                var user = await _userManager.FindByEmailAsync(loginRequest.UserNameOrEmail) ??
-                    await _userManager.FindByNameAsync(loginRequest.UserNameOrEmail);
+                ModelState.AddModelError("UserNameOrEmail", "Email Or UserName Incorrect");
+                ModelState.AddModelError("Password", "Password Incorrect");
 
-                if (user is null)
+                return BadRequest(ModelState);
+            }
+            var result = await _signInManager.PasswordSignInAsync(user, loginRequest.Password, loginRequest.RememberMe, true);
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError("UserNameOrEmail", "Email Or UserName Incorrect");
+                ModelState.AddModelError("Password", "Password Incorrect");
+
+                if (result.IsLockedOut)
                 {
-                    ModelState.AddModelError("UserNameOrEmail", "Email Or UserName Incorrect");
-                    ModelState.AddModelError("Password", "Password Incorrect");
-
-                    return BadRequest(ModelState);
+                    ModelState.AddModelError(string.Empty, "Too many attempts, please try again later");
                 }
-                var result = await _signInManager.PasswordSignInAsync(user, loginRequest.Password, loginRequest.RememberMe, true);
-                if (!result.Succeeded)
-                {
-                    ModelState.AddModelError("UserNameOrEmail", "Email Or UserName Incorrect");
-                    ModelState.AddModelError("Password", "Password Incorrect");
 
-                    if (result.IsLockedOut)
-                    {
-                        ModelState.AddModelError(string.Empty, "Too many attempts, please try again later");
-                    }
+                return BadRequest(ModelState);
+            }
+            string? token = await _accountService.GenerateTokenAsync(user.Id, user.Email!);
+            var refreshToken = _accountService.GenerateRefreshToken();
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            await _userManager.UpdateAsync(user);
+            return Ok(new
+            {
+                AccessToken = token,
+                RefreshToken = refreshToken
+            });
+        }
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken(RefreshTokenRequest request)
+        {
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == request.RefreshToken);
+            if (user is null)
+            {
+                return Unauthorized();
+            }
+            if (user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            {
+                return Unauthorized("Refresh token expired");
+            }
+            var newAccessToken =await _accountService.GenerateTokenAsync(user.Id,user.Email!);
+            var newRefreshToken =_accountService.GenerateRefreshToken();
+            user.RefreshToken = newRefreshToken;
+            user.RefreshTokenExpiryTime =DateTime.UtcNow.AddDays(7);
 
-                    return BadRequest(ModelState);
-                }
-                string? token = await _accountService.GenerateTokenAsync(user.Id, user.Email!);
-                Console.WriteLine(token);
-                return Ok(new APIResponse()
-                {
-                    StatusCode = 200,
-                    Message = [$"Welcome Back {user.FirstName} {user.LastName}", token ?? "no-token"]
-                });
+            await _userManager.UpdateAsync(user);
+            return Ok(new
+            {
+                AccessToken = newAccessToken,
+                RefreshToken = newRefreshToken
+            });
+        }
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user is null)
+                return Unauthorized();
+
+            user.RefreshToken = string.Empty;
+            user.RefreshTokenExpiryTime = DateTime.MinValue;
+
+            var result = await _userManager.UpdateAsync(user);
+            await _signInManager.SignOutAsync();
+
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors.Select(e => e.Description));
             }
 
-        } 
+            return Ok(new
+            {
+                Message = "Logged out successfully"
+            });
+        }
+        [HttpPost("revoke")]
+        [Authorize]
+        public async Task<IActionResult> RevokeRefreshToken()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user is null)
+                return Unauthorized();
+
+            user.RefreshToken = string.Empty;
+            user.RefreshTokenExpiryTime = DateTime.MinValue;
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors.Select(e => e.Description));
+            }
+
+            return Ok(new
+            {
+                Message = "Refresh token revoked successfully"
+            });
+        }
+
+    } 
 }
