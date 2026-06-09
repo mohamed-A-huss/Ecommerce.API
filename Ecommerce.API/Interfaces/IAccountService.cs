@@ -6,5 +6,6 @@
         Task<bool> SendOTPToMailAsync(ApplicationUser user);
         Task<string?> GenerateTokenAsync(string userId, string email);
         string GenerateRefreshToken();
+        string HashRefreshToken(string refreshToken);
     }
 }

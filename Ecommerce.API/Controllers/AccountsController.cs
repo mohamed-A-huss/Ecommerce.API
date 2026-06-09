@@ -89,8 +89,10 @@ namespace Ecommerce.API.Controllers
                 return BadRequest(ModelState);
             }
             string? token = await _accountService.GenerateTokenAsync(user.Id, user.Email!);
+
             var refreshToken = _accountService.GenerateRefreshToken();
-            user.RefreshToken = refreshToken;
+            user.RefreshToken = _accountService.HashRefreshToken(refreshToken);
+
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await _userManager.UpdateAsync(user);
             return Ok(new
@@ -102,7 +104,8 @@ namespace Ecommerce.API.Controllers
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken(RefreshTokenRequest request)
         {
-            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == request.RefreshToken);
+            var hashedToken =_accountService.HashRefreshToken(request.RefreshToken);
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == hashedToken);
             if (user is null)
             {
                 return Unauthorized();
@@ -112,8 +115,9 @@ namespace Ecommerce.API.Controllers
                 return Unauthorized("Refresh token expired");
             }
             var newAccessToken =await _accountService.GenerateTokenAsync(user.Id,user.Email!);
+            
             var newRefreshToken =_accountService.GenerateRefreshToken();
-            user.RefreshToken = newRefreshToken;
+            user.RefreshToken = _accountService.HashRefreshToken(newRefreshToken);
             user.RefreshTokenExpiryTime =DateTime.UtcNow.AddDays(7);
 
             await _userManager.UpdateAsync(user);
